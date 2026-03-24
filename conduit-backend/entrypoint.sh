@@ -5,7 +5,21 @@ set -e
 python manage.py migrate --noinput
 
 # Collect static files (optionally, if needed)
-# python manage.py collectstatic --noinput
+python manage.py collectstatic --noinput
+
+# Create superuser if it doesn't exist
+python manage.py shell -c "
+from django.contrib.auth import get_user_model
+User = get_user_model()
+username = '${DJANGO_SUPERUSER_USERNAME:-admin}'
+email = '${DJANGO_SUPERUSER_EMAIL:-admin@example.com}'
+password = '${DJANGO_SUPERUSER_PASSWORD:-admin}'
+if not User.objects.filter(username=username).exists():
+    User.objects.create_superuser(username, email, password)
+    print('Superuser created:', username)
+else:
+    print('Superuser already exists:', username)
+"
 
 # Start Gunicorn with uwsgi protocol
 # Daher: conduit.wsgi:application is the path zum WSGI-App-Object
