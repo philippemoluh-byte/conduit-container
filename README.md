@@ -116,19 +116,24 @@ docker compose logs -f frontend
 
 ```text
 conduit-container/
-├── .gitignore              # Root git ignore rules for Python, Node, env files, and editor artifacts
-├── .env                    # Local runtime environment values used by Docker Compose (not committed)
-├── example.env             # Template environment file to copy as .env
-├── docker-compose.yml      # Defines backend/frontend services, ports, volumes, and environment wiring
-├── README.md               # Project documentation and startup instructions
 ├── conduit-backend/        # Django REST API
+│   ├── .gitignore          # Backend-specific ignore rules
 │   ├── .dockerignore       # Excludes unnecessary files from backend Docker build context
 │   ├── Dockerfile          # Builds and runs Django backend with Gunicorn
 │   ├── entrypoint.sh       # Runs migrations, collectstatic, creates superuser
+│   ├── manage.py           # Django management entry point
+│   ├── conduit/            # Django project package (settings, urls, apps)
 │   └── requirements.txt    # Python dependencies for the backend service
 ├── conduit-frontend/       # Angular app served by Nginx
 │   ├── .dockerignore       # Excludes unnecessary files from frontend Docker build context
+│   ├── .gitignore          # Frontend-specific ignore rules
 │   ├── Dockerfile          # Multi-stage build: Angular build output served by Nginx
 │   ├── entrypoint.sh       # Seeds built HTML into persistent volume
-│   └── nginx.conf          # Frontend web server config and API reverse proxy settings
+│   ├── nginx.conf          # Frontend web server config and API reverse proxy settings
+│   ├── package.json        # Frontend npm scripts and dependencies
+│   └── src/                # Angular source code
+├── .gitignore              # Root ignore rules for Python, Node, env files, and editor artifacts
+├── example.env             # Template environment file to copy as .env
+├── docker-compose.yml      # Defines backend/frontend services, ports, volumes, and environment wiring
+└── README.md               # Project documentation and startup instructions
 ```
