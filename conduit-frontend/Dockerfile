@@ -11,7 +11,7 @@ RUN npm run build -- --configuration production
 
 FROM nginx:1.25-alpine AS production
 
-ARG HOST_PORT=8082
+ARG HOST_PORT=8282
 
 COPY --from=builder /app/dist/angular-conduit /opt/app-dist
 

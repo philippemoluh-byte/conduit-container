@@ -19,13 +19,10 @@ services:
       context: ./conduit-frontend
       dockerfile: Dockerfile
     ports:
-      - "8082:8082"
-    volumes:
-      - frontend-html:/usr/share/nginx/html
+      - "8282:8282"
     depends_on:
       - backend
 
 volumes:
   backend-static:
   backend-data:
-  frontend-html:
