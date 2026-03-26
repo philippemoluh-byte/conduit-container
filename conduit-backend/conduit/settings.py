@@ -12,6 +12,20 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import os
 
+
+def env_bool(name, default=False):
+    value = os.environ.get(name)
+    if value is None or value.strip() == '':
+        return default
+    return value.strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+def env_list(name, default_csv):
+    value = os.environ.get(name)
+    if value is None or value.strip() == '':
+        value = default_csv
+    return [item.strip() for item in value.split(',') if item.strip()]
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -23,9 +37,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '2^f+3@v7$v1f8yt0!s)3-1t$)tlp+xm17=*g))_xoi&&9m#2a&'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = env_bool('DEBUG', True)
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,backend,frontend').split(',')
+ALLOWED_HOSTS = env_list(
+    'ALLOWED_HOSTS',
+    '*'
+)
 
 # Proxy-Trust-Einstellungen
 USE_X_FORWARDED_HOST = True
