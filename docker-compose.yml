@@ -4,7 +4,7 @@ services:
       context: ./conduit-backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8000"
     volumes:
       - backend-static:/app/staticfiles
       - backend-data:/app/conduit
@@ -14,6 +14,10 @@ services:
       - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL}
       - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - DEBUG=${DEBUG}
+    networks:
+      - conduit-network
+
   frontend:
     build:
       context: ./conduit-frontend
@@ -22,7 +26,13 @@ services:
       - "8282:8282"
     depends_on:
       - backend
+    networks:
+      - conduit-network
 
 volumes:
   backend-static:
   backend-data:
+
+networks:
+  conduit-network:
+           driver: bridge
