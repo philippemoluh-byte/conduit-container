@@ -58,11 +58,11 @@ docker compose --env-file .env up --build -d
 
 ### Access the application
 
-| Service      | URL                              |
-|--------------|----------------------------------|
-| Frontend     | http://<your_ip>:8082            |
-| Backend API  | http://<your_ip>:8000/api/       |
-| Django Admin | http://<your_ip>:8000/admin/     |
+| Page         | URL                          |
+|--------------|------------------------------|
+| Home         | http://<your_ip>:8282/home/  |
+| Backend API  | http://<your_ip>:8282/api/   |
+| Admin        | http://<your_ip>:8282/admin/ |
 
 Log in to the Admin panel with the credentials from your `.env`.
 
@@ -98,6 +98,12 @@ Stream live logs for the backend only
 docker compose logs -f backend
 ```
 
+Save the Backend logs in the file
+
+```bash
+docker compose logs backend > backend-logs.txt
+```
+
 Rebuild the frontend (clears the HTML volume so the new build is picked up)
 
 ```bash
@@ -110,6 +116,12 @@ Stream live logs for the frontend only
 
 ```bash
 docker compose logs -f frontend
+```
+
+Save the frontend logs in the file
+
+```bash
+docker compose logs frontend > frontend-logs.txt
 ```
 
 ## Project Structure
