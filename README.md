@@ -74,28 +74,10 @@ Stream live logs from all services (backend and frontend)
 docker compose logs -f
 ```
 
-Stop all containers
-
-```bash
-docker compose down
-```
-
-Stop and remove volumes
-
-```bash
-docker compose down -v
-```
-
 Rebuild the backend only after changes in `conduit-backend/`
 
 ```bash
 docker compose --env-file .env up --build backend -d
-```
-
-Stream live logs for the backend only
-
-```bash
-docker compose logs -f backend
 ```
 
 Save the Backend logs in the file
