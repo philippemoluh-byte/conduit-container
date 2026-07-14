@@ -132,3 +132,4 @@ conduit-container/
 ├── docker-compose.yml      # Defines backend/frontend services, ports, volumes, and environment wiring
 └── README.md               # Project documentation and startup instructions
 ```
+# Conduit container
