@@ -1,36 +1,41 @@
+# Define services for the application
 services:
+  # Backend service configuration
   backend:
-    build: 
-      context: ./conduit-backend
-      dockerfile: Dockerfile
+    build:
+      context: ./conduit-backend  # Path to the backend directory
+      dockerfile: Dockerfile      # Dockerfile for the backend
     ports:
-      - "8000"
+      - "8000"                    # Expose port 8000 for the backend
     volumes:
-      - backend-static:/app/staticfiles
+      - backend-static:/app/staticfiles  # Volume for static files
     environment:
-      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-conduit.settings}
-      - DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME:-admin}
-      - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL:-admin@example.com}
-      - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD:-change-this-password}
-      - ALLOWED_HOSTS=*
-      - DEBUG=${DEBUG:-True}
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-conduit.settings}  # Django settings module
+      - DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME:-admin}       # Default superuser username
+      - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL:-admin@example.com} # Default superuser email
+      - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD:-change-this-password} # Default superuser password
+      - ALLOWED_HOSTS=*            # Allow all hosts
+      - DEBUG=${DEBUG:-True}       # Debug mode
     networks:
-      - conduit-network
+      - conduit-network            # Connect to the conduit network
 
+  # Frontend service configuration
   frontend:
     build:
-      context: ./conduit-frontend
-      dockerfile: Dockerfile
+      context: ./conduit-frontend  # Path to the frontend directory
+      dockerfile: Dockerfile       # Dockerfile for the frontend
     ports:
-      - "8282:8282"
+      - "8282:8282"                # Map port 8282 for the frontend
     depends_on:
-      - backend
+      - backend                    # Ensure backend starts before frontend
     networks:
-      - conduit-network
+      - conduit-network            # Connect to the conduit network
 
+# Define volumes for persistent data storage
 volumes:
-  backend-static:
+  backend-static:                  # Volume for backend static files
 
+# Define a custom network for inter-service communication
 networks:
   conduit-network:
-           driver: bridge
+    driver: bridge                 # Use bridge network driver

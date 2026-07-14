@@ -143,7 +143,8 @@ conduit-container/
 │   ├── entrypoint.sh       # Seeds built HTML into persistent volume
 │   ├── nginx.conf          # Frontend web server config and API reverse proxy settings
 │   ├── package.json        # Frontend npm scripts and dependencies
-│   └── src/                # Angular source code
+│   └── src/                # Angular source codedocs
+├── docs/                   # Additional documentation
 ├── .gitignore              # Root ignore rules for Python, Node, env files, and editor artifacts
 ├── example.env             # Template environment file to copy as .env
 ├── docker-compose.yml      # Defines backend/frontend services, ports, volumes, and environment wiring

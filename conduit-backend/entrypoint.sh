@@ -22,7 +22,7 @@ else:
 "
 
 # Start Gunicorn with uwsgi protocol
-# Daher: conduit.wsgi:application is the path zum WSGI-App-Object
+# therefore: conduit.wsgi:application is the path zum WSGI-App-Object
 exec gunicorn \
     --bind 0.0.0.0:8000 \
     --workers 4 \
