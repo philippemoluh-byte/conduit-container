@@ -40,12 +40,12 @@ cp example.env .env
 Edit the `.env` file:
 
 ```bash
-DEBUG=True                                     # Django debug mode (`True` for development, `False` for production)
-ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0      # Comma-separated allowed hosts
-DJANGO_SETTINGS_MODULE=conduit.settings        # Django settings module path
-DJANGO_SUPERUSER_USERNAME=admin                # Admin username created on startup
-DJANGO_SUPERUSER_EMAIL=admin@example.com       # Admin email
-DJANGO_SUPERUSER_PASSWORD=change-this-password # Admin password
+DEBUG=True                                      # Django debug mode (`True` for development, `False` for production)
+ALLOWED_HOSTS=<your_ip_hosts>                   # Comma-separated allowed hosts
+DJANGO_SETTINGS_MODULE=<your_settings-module>   # Django settings module path
+DJANGO_SUPERUSER_USERNAME=<your_admin_user>     # Admin username created on startup
+DJANGO_SUPERUSER_EMAIL=<your_admin_email>       # Admin email
+DJANGO_SUPERUSER_PASSWORD=<your_password>       # Admin password
 ```
 
 ### 3. Build and run
@@ -58,11 +58,11 @@ docker compose --env-file .env up --build -d
 
 ### Access the application
 
-| Page         | URL                          |
-|--------------|------------------------------|
-| Home         | http://<your_ip>:8282/home/  |
-| Backend API  | http://<your_ip>:8282/api/   |
-| Admin        | http://<your_ip>:8282/admin/ |
+| Page                                               | URL                          |
+|----------------------------------------------------|------------------------------|
+| conduit application                                | http://<your_ip>:8282        |
+| Backend API                                        | http://<your_ip>:8282/api/   |
+| Django Administration page (Only for deployed App) | http://<your_ip>:8282/admin/ |
 
 Log in to the Admin panel with the credentials from your `.env`.
 
