@@ -31,6 +31,9 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copy the entrypoint script to the container
 COPY entrypoint.sh /entrypoint.sh
 
+#remove Windows-style line endings and make the entrypoint script executable
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
+
 # Make the entrypoint script executable
 RUN chmod +x /entrypoint.sh
 
@@ -38,4 +41,4 @@ RUN chmod +x /entrypoint.sh
 EXPOSE ${HOST_PORT}
 
 # Set the entrypoint script to run when the container starts
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/bin/sh","/entrypoint.sh"]
