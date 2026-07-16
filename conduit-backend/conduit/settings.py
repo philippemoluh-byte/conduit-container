@@ -44,9 +44,7 @@ ALLOWED_HOSTS = env_list(
     '*'
 )
 
-# Proxy-Trust-Einstellungen
-USE_X_FORWARDED_HOST = True
-USE_X_FORWARDED_PORT = True
+
 #SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
