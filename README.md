@@ -46,6 +46,13 @@ DJANGO_SETTINGS_MODULE=<your_settings-module>   # Django settings module path
 DJANGO_SUPERUSER_USERNAME=<your_admin_user>     # Admin username created on startup
 DJANGO_SUPERUSER_EMAIL=<your_admin_email>       # Admin email
 DJANGO_SUPERUSER_PASSWORD=<your_password>       # Admin password
+DB_NAME=<your_admin_email>                      # Database name
+DB_USER=<your_db_user>                          # Database user
+DB_PASSWORD=<your_db_password>                  # Database password
+DB_HOST=<your_db_host>                          # Database host
+DB_PORT=<your_db_port>                          # Database port
+CC_SECRET_KEY=<your_secret_key>                 # Django secret key
+
 ```
 
 ### 3. Build and run
