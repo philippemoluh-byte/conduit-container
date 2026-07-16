@@ -1,12 +1,32 @@
 # Define services for the application
 services:
+
+  db:
+    image: postgres:13-alpine  # Use the official PostgreSQL image
+    container_name: conduit-db  # Name of the database container
+    restart: always              # Restart the container if it stops
+    environment:
+      POSTGRES_USER: ${DB_USER:-conduit}         # Database username
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-conduit} # Database password
+      POSTGRES_DB: ${DB_NAME:-conduit}             # Database name
+    volumes:
+      - postgres-data:/var/lib/postgresql/data  # Persist database data
+    # Health check to ensure the database is ready before starting dependent services
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-conduit}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - conduit-network            # Connect to the conduit network
+
   # Backend service configuration
   backend:
     build:
       context: ./conduit-backend  # Path to the backend directory
       dockerfile: Dockerfile      # Dockerfile for the backend
     ports:
-      - "8000"                    # Expose port 8000 for the backend
+      - "8000:8000"                    # Expose port 8000 for the backend
     volumes:
       - backend-static:/app/staticfiles  # Volume for static files
     environment:
@@ -15,7 +35,15 @@ services:
       - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL:-admin@example.com} # Default superuser email
       - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD:-change-this-password} # Default superuser password
       - ALLOWED_HOSTS=*            # Allow all hosts
-      - DEBUG=${DEBUG:-True}       # Debug mode
+      - DEBUG=${DEBUG:-True}       # Debug mod
+      - DB_NAME=${DB_NAME:-conduit}
+      - DB_USER=${DB_USER:-conduit}
+      - DB_PASSWORD=${DB_PASSWORD:-conduit}
+      - DB_HOST=db
+      - DB_PORT=5432
+    depends_on:
+       db:
+         condition: service_healthy  # Wait for the database to be healthy before starting
     networks:
       - conduit-network            # Connect to the conduit network
 
@@ -25,7 +53,7 @@ services:
       context: ./conduit-frontend  # Path to the frontend directory
       dockerfile: Dockerfile       # Dockerfile for the frontend
     ports:
-      - "8282:8282"                # Map port 8282 for the frontend
+      - "8282:80"                # Map port 8282 for the frontend
     depends_on:
       - backend                    # Ensure backend starts before frontend
     networks:
@@ -33,7 +61,8 @@ services:
 
 # Define volumes for persistent data storage
 volumes:
-  backend-static:                  # Volume for backend static files
+  backend-static:                  # Volume for backend static
+  postgres-data:
 
 # Define a custom network for inter-service communication
 networks:

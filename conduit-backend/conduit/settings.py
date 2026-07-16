@@ -106,8 +106,12 @@ WSGI_APPLICATION = 'conduit.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME', 'conduit'),
+        'USER': os.environ.get('DB_USER', 'conduit'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'conduit'),
+        'HOST': os.environ.get('DB_HOST', 'db'),        # ← docker-compose service name
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 
@@ -154,6 +158,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 CORS_ORIGIN_WHITELIST = (
     'http://localhost:8282',
     'http://127.0.0.1:8282',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
 )
 
 # Tell Django about the custom `User` model we created. The string

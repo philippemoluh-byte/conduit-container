@@ -28,17 +28,11 @@ COPY --from=builder /app/dist/angular-conduit /opt/app-dist
 # Copy the Nginx configuration file to the container
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy the entrypoint script to the container
-COPY entrypoint.sh /entrypoint.sh
-
-#remove Windows-style line endings and make the entrypoint script executable
-RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
-
-# Make the entrypoint script executable
-RUN chmod +x /entrypoint.sh
+# Remove Windows-style line endings and make the entrypoint script executable
+RUN sed -i 's/\r$//' /etc/nginx/conf.d/default.conf
 
 # Expose the application port
 EXPOSE ${HOST_PORT}
 
-# Set the entrypoint script to run when the container starts
-ENTRYPOINT ["/bin/sh","/entrypoint.sh"]
+# Set the entrypoint command directly in the Dockerfile
+CMD ["nginx", "-g", "daemon off;"]
