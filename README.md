@@ -1,1 +1,141 @@
-# Conduit container
+# Conduit-container
+
+This repository contains a Dockerized full-stack Conduit application with a Django REST backend and an Angular frontend.
+It provides a consistent, container-based runtime for local development and deployment.
+
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Quickstart](#quickstart)
+  - [1. Clone the repository](#1-clone-the-repository)
+  - [2. Configure environment variables](#2-configure-environment-variables)
+  - [3. Build and run](#3-build-and-run)
+- [Usage](#usage)
+  - [Access the application](#access-the-application)
+  - [Common Commands](#common-commands)
+- [Project Structure](#project-structure)
+
+## Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) and Docker Compose
+- Git
+
+## Quickstart
+
+### 1. Clone the repository
+
+```bash
+git clone git@github.com:philippemoluh-byte/conduit-container.git
+cd conduit-container
+```
+
+### 2. Configure environment variables
+
+Copy the example file and fill in your values:
+
+```bash
+cp example.env .env
+```
+
+Edit the `.env` file:
+
+```bash
+DEBUG=True                                      # Django debug mode (`True` for development, `False` for production)
+ALLOWED_HOSTS=<your_ip_hosts>                   # Comma-separated allowed hosts
+DJANGO_SETTINGS_MODULE=<your_settings-module>   # Django settings module path
+DJANGO_SUPERUSER_USERNAME=<your_admin_user>     # Admin username created on startup
+DJANGO_SUPERUSER_EMAIL=<your_admin_email>       # Admin email
+DJANGO_SUPERUSER_PASSWORD=<your_password>       # Admin password
+DB_NAME=<your_admin_email>                      # Database name
+DB_USER=<your_db_user>                          # Database user
+DB_PASSWORD=<your_db_password>                  # Database password
+DB_HOST=<your_db_host>                          # Database host
+DB_PORT=<your_db_port>                          # Database port
+CC_SECRET_KEY=<your_secret_key>                 # Django secret key
+
+```
+
+### 3. Build and run
+
+```bash
+docker compose --env-file .env up --build -d
+```
+
+## Usage
+
+### Access the application
+
+| Page                                               | URL                          |
+|----------------------------------------------------|------------------------------|
+| conduit application                                | http://<your_ip>:8282        |
+| Backend API                                        | http://<your_ip>:8000/api/   |
+| Django Administration page (Only for deployed App) | http://<your_ip>:8282/admin/ |
+
+Log in to the Admin panel with the credentials from your `.env`.
+
+### Common Commands
+
+Stream live logs from all services (backend and frontend)
+
+```bash
+docker compose logs -f
+```
+
+Rebuild the backend only after changes in `conduit-backend/`
+
+```bash
+docker compose --env-file .env up --build backend -d
+```
+
+Save the Backend logs in the file
+
+```bash
+docker compose logs backend > backend-logs.txt
+```
+
+Rebuild the frontend (clears the HTML volume so the new build is picked up)
+
+```bash
+docker compose down frontend
+docker volume rm conduit-container_frontend-html
+docker compose --env-file .env up --build frontend -d
+```
+
+Stream live logs for the frontend only
+
+```bash
+docker compose logs -f frontend
+```
+
+Save the frontend logs in the file
+
+```bash
+docker compose logs frontend > frontend-logs.txt
+```
+
+## Project Structure
+
+```text
+conduit-container/
+├── conduit-backend/        # Django REST API
+│   ├── .gitignore          # Backend-specific ignore rules
+│   ├── .dockerignore       # Excludes unnecessary files from backend Docker build context
+│   ├── Dockerfile          # Builds and runs Django backend with Gunicorn
+│   ├── entrypoint.sh       # Runs migrations, collectstatic, creates superuser
+│   ├── manage.py           # Django management entry point
+│   ├── conduit/            # Django project package (settings, urls, apps)
+│   └── requirements.txt    # Python dependencies for the backend service
+├── conduit-frontend/       # Angular app served by Nginx
+│   ├── .dockerignore       # Excludes unnecessary files from frontend Docker build context
+│   ├── .gitignore          # Frontend-specific ignore rules
+│   ├── Dockerfile          # Multi-stage build: Angular build output served by Nginx
+│   ├── entrypoint.sh       # Seeds built HTML into persistent volume
+│   ├── nginx.conf          # Frontend web server config and API reverse proxy settings
+│   ├── package.json        # Frontend npm scripts and dependencies
+│   └── src/                # Angular source codedocs
+├── docs/                   # Additional documentation
+├── .gitignore              # Root ignore rules for Python, Node, env files, and editor artifacts
+├── example.env             # Template environment file to copy as .env
+├── docker-compose.yml      # Defines backend/frontend services, ports, volumes, and environment wiring
+└── README.md               # Project documentation and startup instructions
+```
