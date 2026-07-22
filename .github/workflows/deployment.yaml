@@ -41,7 +41,7 @@
           with:
             registry: ${{ env.REGISTRY }}
             username: ${{ github.actor }}
-            password: ${{ secrets.GH_TOKEN }}
+            password: ${{ secrets.GITHUB_TOKEN }}
 
         - name: Repository-Name in kleinbuchstaben ermiitteln
           id: repo-name
