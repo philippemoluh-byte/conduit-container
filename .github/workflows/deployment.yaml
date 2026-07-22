@@ -71,7 +71,7 @@
               host: ${{ secrets.CLOUD_VM_HOST }}
               username: ${{ secrets.CLOUD_VM_USER }}
               key: ${{ secrets.SSH_PRIVATE_KEY }}
-              port: ${{ secrets.VM_PORT }}
+              port: 8282
               script-stop: true
               script: |
                 set -euo pipefail
