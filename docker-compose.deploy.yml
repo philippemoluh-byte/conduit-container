@@ -1,0 +1,6 @@
+services:
+  backend:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE}:backend-${IMAGE_TAG}
+
+  frontend:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE}:frontend-${IMAGE_TAG}
