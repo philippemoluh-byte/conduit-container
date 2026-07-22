@@ -41,7 +41,7 @@
           with:
             registry: ${{ env.REGISTRY }}
             username: ${{ github.actor }}
-            password: ${{ secrets.GITHUB_TOKEN }}
+            password: ${{ secrets.GH_TOKEN }}
 
         - name: Repository-Name in kleinbuchstaben ermiitteln
           id: repo-name
@@ -71,12 +71,12 @@
               host: ${{ secrets.CLOUD_VM_HOST }}
               username: ${{ secrets.CLOUD_VM_USER }}
               key: ${{ secrets.SSH_PRIVATE_KEY }}
-              port: 8282
+              port: 22
               script-stop: true
               script: |
                 set -euo pipefail
                 
-                cd project/conduit-deployment/conduit-container
+                cd ~/project/conduit-deployment/conduit-container
                 
                 echo "${{secrets.GITHUB_TOKEN}} | docker login ghcr.io -u ${{ secrets.GITHUB_ACTOR }} --password-stdin"
                 export IMAGE_NAMESPACE=$(echo "${GITHUB_REPOSITORY,,}" | tr '[:upper:]' '[:lower:]')

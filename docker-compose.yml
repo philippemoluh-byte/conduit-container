@@ -22,12 +22,10 @@ services:
 
   # Backend service configuration
   backend:
+    build:
+      context: ./conduit-backend  # Path to the backend directory
+      dockerfile: Dockerfile      # Dockerfile for the backend
     image: ${REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE}/backend:${IMAGE_TAG:-latest}
-    container_name: conduit-backend
-    restart: always
-#    build:
-#      context: ./conduit-backend  # Path to the backend directory
-#      dockerfile: Dockerfile      # Dockerfile for the backend
     ports:
       - "8000:8000"                    # Expose port 8000 for the backend
     volumes:
@@ -52,14 +50,21 @@ services:
 
   # Frontend service configuration
   frontend:
+    build:
+      context: ./conduit-frontend  # Path to the frontend directory
+      dockerfile: Dockerfile       # Dockerfile for the frontend
     image: ${REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE}/frontend:${IMAGE_TAG:-latest}
-    container_name: conduit-frontend
-    restart: always
-#    build:
-#      context: ./conduit-frontend  # Path to the frontend directory
-#      dockerfile: Dockerfile       # Dockerfile for the frontend
     ports:
       - "8282:80"                # Map port 8282 for the frontend
+
+    # Persistenz: falls der Nginx-Container selbst Zugriffslogs o.ä.
+    # persistieren soll, kann hier ein Volume ergänzt werden.
+    volumes:
+      - frontend-logs:/var/log/nginx
+
+    # Unkritische Konfiguration, keine Auth-Werte notwendig
+    environment:
+      - API_BASE_URL=${API_BASE_URL:-http://backend:8000}
     depends_on:
       - backend                    # Ensure backend starts before frontend
     networks:
@@ -69,6 +74,7 @@ services:
 volumes:
   backend-static:                  # Volume for backend static
   postgres-data:
+  frontend-logs:                  # Volume for frontend logs
 
 # Define a custom network for inter-service communication
 networks:
