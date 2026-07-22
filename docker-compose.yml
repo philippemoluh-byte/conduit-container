@@ -22,9 +22,12 @@ services:
 
   # Backend service configuration
   backend:
-    build:
-      context: ./conduit-backend  # Path to the backend directory
-      dockerfile: Dockerfile      # Dockerfile for the backend
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE}/backend:${IMAGE_TAG:-latest}
+    container_name: conduit-backend
+    restart: always
+#    build:
+#      context: ./conduit-backend  # Path to the backend directory
+#      dockerfile: Dockerfile      # Dockerfile for the backend
     ports:
       - "8000:8000"                    # Expose port 8000 for the backend
     volumes:
@@ -49,9 +52,12 @@ services:
 
   # Frontend service configuration
   frontend:
-    build:
-      context: ./conduit-frontend  # Path to the frontend directory
-      dockerfile: Dockerfile       # Dockerfile for the frontend
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE}/frontend:${IMAGE_TAG:-latest}
+    container_name: conduit-frontend
+    restart: always
+#    build:
+#      context: ./conduit-frontend  # Path to the frontend directory
+#      dockerfile: Dockerfile       # Dockerfile for the frontend
     ports:
       - "8282:80"                # Map port 8282 for the frontend
     depends_on:
