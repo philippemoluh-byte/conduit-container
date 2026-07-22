@@ -63,6 +63,9 @@ jobs:
     name: Deploy to Cloud VM
     needs: build-and-push
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
 
     steps:
       - name: ssh-connection to cloud vm open and run deployment commands
