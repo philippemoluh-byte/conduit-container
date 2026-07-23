@@ -3,7 +3,7 @@
     push:
       branches:
         - feature/conduit-deployment
-
+    workflow_dispatch: {}
   env:
     REGISTRY: ghcr.io
 
