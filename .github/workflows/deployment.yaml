@@ -67,14 +67,6 @@
 
 
       steps:
-        - name: Port-Wert debuggen (temporär, danach wieder entfernen)
-          run: |
-            echo "Länge: ${#PORT}"
-            echo "Inhalt in Anführungszeichen: [${PORT}]"
-            echo "$PORT" | od -c | head -5
-          env:
-            PORT: ${{ secrets.CLOUD_VM_PORT }}
-
         - name: ssh-connection to cloud vm open and run deployment commands
           uses: appleboy/ssh-action@v1.0.3
           with:
