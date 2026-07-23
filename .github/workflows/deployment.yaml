@@ -64,36 +64,43 @@
       name: Deploy to Cloud VM
       needs: build-and-push
       runs-on: ubuntu-latest
-
-
       steps:
-        - name: Port-Wert debuggen (temporär, danach wieder entfernen)
-          run: |
-            echo "Länge: ${#PORT}"
-            echo "Inhalt in Anführungszeichen: [${PORT}]"
-            echo "$PORT" | od -c | head -5
-          env:
-            PORT: ${{ secrets.CLOUD_VM_PORT }}
-
-        - name: ssh-connection to cloud vm open and run deployment commands
-          uses: appleboy/ssh-action@v1.0.3
+        # SSH-Key im Runner laden (ssh-agent), statt den fehleranfälligen
+        # appleboy/ssh-action-Docker-Wrapper zu nutzen. Robuster, da hier
+        # der ganz normale, native ssh-Client des Runners verwendet wird.
+        - name: SSH-Agent starten und Key laden
+          uses: webfactory/ssh-agent@v0.9.0
           with:
-              host: ${{ secrets.CLOUD_VM_HOST }}
-              username: ${{ secrets.CLOUD_VM_USER }}
-              key: ${{ secrets.SSH_PRIVATE_KEY }}
-              port: ${{ secrets.CLOUD_VM_PORT }}
-              script-stop: true
-              script: |
-                set -euo pipefail
-                cd ~/project/conduit-deployment/conduit-container
-                echo starting deployment on cloud vm
-                echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-                export IMAGE_NAMESPACE=$(echo "${GITHUB_REPOSITORY,,}" | tr '[:upper:]' '[:lower:]')
-                export IMAGE_TAG="${{ github.sha }}"
-                echo "the ready built images are pulled from the GitHub Container Registry to the cloud vm"
-                docker compose pull
-                echo "the pulled images are started on the cloud vm"
-                docker compose up -d --remove-orphans
-                
-#                echo "the old images are removed from the cloud vm"
-#                docker image prune -f
+            ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+        - name: Host-Key bekannt machen (verhindert Interaktions-Prompt)
+          run: |
+            mkdir -p ~/.ssh
+            ssh-keyscan -p "${{ secrets.CLOUD_VM_PORT }}" "${{ secrets.CLOUD_VM_HOST }}" >> ~/.ssh/known_hosts
+
+        - name: SSH-Verbindung zur VM öffnen und Deployment ausführen
+          env:
+            VM_HOST: ${{ secrets.CLOUD_VM_HOST }}
+            VM_USER: ${{ secrets.CLOUD_VM_USER }}
+            VM_PORT: ${{ secrets.CLOUD_VM_PORT }}
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GH_ACTOR: ${{ github.actor }}
+            GH_REPO: ${{ github.repository }}
+            GH_SHA: ${{ github.sha }}
+          run: |
+            set -euo pipefail
+            
+            ssh -p "${VM_PORT}" "${VM_USER}@${VM_HOST}" bash -s << EOF
+              set -euo pipefail
+            
+              cd ~/project/conduit-deployment/conduit-container
+            
+              echo "${GH_TOKEN}" | docker login ghcr.io -u "${GH_ACTOR}" --password-stdin
+            
+              export IMAGE_NAMESPACE="\$(echo '${GH_REPO}' | tr '[:upper:]' '[:lower:]')"
+              export IMAGE_TAG="${GH_SHA}"
+            
+              docker compose pull
+              docker compose up -d --remove-orphans
+              docker image prune -f
+            EOF

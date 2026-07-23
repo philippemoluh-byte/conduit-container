@@ -3,7 +3,7 @@ FROM python:3.5.2-slim
 
 # Define build arguments for the working directory and application port
 ARG _WORKDIR=/app
-ARG APP_PORT=8000
+ARG APP_PORT=8001
 
 # Set environment variables to prevent Python from writing .pyc files and to enable unbuffered output
 ENV PYTHONDONTWRITEBYTECODE=1 \
