@@ -90,7 +90,7 @@
           run: |
             set -euo pipefail
             
-            ssh -p "${secrets.CLOUD_VM_PORT}" "${secrets.CLOUD_VM_USER}@${secrets.CLOUD_VM_HOST}" bash -s << EOF
+            ssh -p "${VM_PORT}" "${VM_USER}@${VM_HOST}" bash -s << EOF
               set -euo pipefail
             
               cd ~/project/conduit-deployment/conduit-container
