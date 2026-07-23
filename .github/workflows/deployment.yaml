@@ -78,12 +78,12 @@
             mkdir -p ~/.ssh
             ssh-keyscan -p "${{ secrets.CLOUD_VM_PORT }}" "${{ secrets.CLOUD_VM_HOST }}" >> ~/.ssh/known_hosts
 
-        - name: User-Wert debuggen (temporär, danach wieder entfernen)
+        - name: Host-Wert debuggen (temporär)
           run: |
-            echo "Länge: ${#VM_USER}"
-            echo "$VM_USER" | od -c | head -5
+            echo "Länge: ${#VM_HOST}"
+            echo "$VM_HOST" | od -c | head -5
           env:
-            VM_USER: ${{ secrets.CLOUD_VM_USER }}
+            VM_HOST: ${{ secrets.CLOUD_VM_HOST }}
 
         - name: SSH-Verbindung zur VM öffnen und Deployment ausführen
           env:
