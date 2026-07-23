@@ -78,6 +78,9 @@
             mkdir -p ~/.ssh
             ssh-keyscan -p "${{ secrets.CLOUD_VM_PORT }}" "${{ secrets.CLOUD_VM_HOST }}" >> ~/.ssh/known_hosts
 
+        - name: Fingerprint des geladenen Keys prüfen (temporär)
+          run: ssh-add -l
+
         - name: SSH-Verbindung zur VM öffnen und Deployment ausführen
           env:
             VM_HOST: ${{ secrets.CLOUD_VM_HOST }}
