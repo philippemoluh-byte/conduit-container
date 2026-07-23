@@ -74,7 +74,7 @@ docker compose --env-file .env up --build -d
 | Page                                               | URL                          |
 |----------------------------------------------------|------------------------------|
 | conduit application                                | http://<your_ip>:8282        |
-| Backend API                                        | http://<your_ip>:8000/api/   |
+| Backend API                                        | http://<your_ip>:8001/api/   |
 | Django Administration page (Only for deployed App) | http://<your_ip>:8282/admin/ |
 
 Log in to the Admin panel with the credentials from your `.env`.
