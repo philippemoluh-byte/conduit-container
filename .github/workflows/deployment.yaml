@@ -96,5 +96,5 @@
                 echo "the pulled images are started on the cloud vm"
                 docker compose up -d --remove-orphans
                 
-                echo "the old images are removed from the cloud vm"
-                docker image prune -f
+#                echo "the old images are removed from the cloud vm"
+#                docker image prune -f
