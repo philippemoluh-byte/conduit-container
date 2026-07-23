@@ -59,28 +59,36 @@
             cache-from: type=gha,scope=${{ matrix.service }}
             cache-to: type=gha,scope=${{ matrix.service }}
 
+
     deploy-to-cloud-vm:
       name: Deploy to Cloud VM
       needs: build-and-push
       runs-on: ubuntu-latest
 
+
       steps:
+        - name: Secret-Länge prüfen (nur zum Debuggen)
+          run: |
+            echo "Port-Secret-Länge: ${#PORT}"
+          env:
+            PORT: ${{ secrets.CLOUD_VM_PORT }}
+
         - name: ssh-connection to cloud vm open and run deployment commands
           uses: appleboy/ssh-action@v1.0.3
           with:
               host: ${{ secrets.CLOUD_VM_HOST }}
               username: ${{ secrets.CLOUD_VM_USER }}
               key: ${{ secrets.SSH_PRIVATE_KEY }}
-              port: 22
+              port: ${{ secrets.CLOUD_VM_PORT }}
               script-stop: true
               script: |
                 set -euo pipefail
                 
                 cd ~/project/conduit-deployment/conduit-container
                 echo starting deployment on cloud vm
-                echo "${{secrets.GITHUB_TOKEN}} | docker login ghcr.io -u ${{ secrets.GITHUB_ACTOR }} --password-stdin"
+                echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
                 export IMAGE_NAMESPACE=$(echo "${GITHUB_REPOSITORY,,}" | tr '[:upper:]' '[:lower:]')
-                export IMAGE_TAG= "${GITHUB_SHA}"
+                export IMAGE_TAG="${{ github.sha }}"
                 
                 echo "the ready built images are pulled from the GitHub Container Registry to the cloud vm"
                 docker compose pull
