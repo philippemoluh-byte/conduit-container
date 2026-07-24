@@ -82,6 +82,9 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       # Load the SSH key into the runner (ssh-agent) instead of using the
       # error-prone appleboy/ssh-action Docker wrapper. More robust, since
       # this uses the runner's plain, native ssh client.
