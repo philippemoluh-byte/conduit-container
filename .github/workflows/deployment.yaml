@@ -138,6 +138,20 @@ jobs:
           EOF
           chmod 600 .env.deploy
 
+      # Ensures the deployment directory exists on the VM before we try
+      # to scp files into it. scp cannot create missing directories on
+      # its own, so on a brand-new VM (or the very first deployment)
+      # this step is required - on every later run it's a harmless no-op
+      - name: Ensure deployment directory exists on the VM
+        env:
+          VM_HOST: ${{ secrets.CLOUD_VM_HOST }}
+          VM_USER: ${{ secrets.CLOUD_VM_USER }}
+          VM_PORT: ${{ secrets.CLOUD_VM_PORT }}
+        run: |
+          set -euo pipefail
+          ssh -p "${VM_PORT}" "${VM_USER}@${VM_HOST}" \
+            "mkdir -p ~/project/conduit-deployment/conduit-container"
+
       # Copies docker-compose.yml and the freshly generated .env.deploy to
       # the VM, using the same ssh-agent/key loaded above - no extra login.
       - name: Copy docker-compose.yml and .env to the VM
