@@ -22,9 +22,6 @@ services:
 
   # Backend service configuration
   backend:
-#    build:
-#      context: ./conduit-backend  # Path to the backend directory
-#      dockerfile: Dockerfile      # Dockerfile for the backend
     image: ${REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE}:backend-${IMAGE_TAG:-latest}
     container_name: conduit-backend  # Name of the backend container
     restart: always                    # Restart the container if it stops
