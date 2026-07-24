@@ -74,7 +74,7 @@ docker compose --env-file .env up --build -d
 | Page                                               | URL                          |
 |----------------------------------------------------|------------------------------|
 | conduit application                                | http://<your_ip>:8282        |
-| Backend API                                        | http://<your_ip>:8001/api/   |
+| Backend API                                        | http://<your_ip>:8000/api/   |
 | Django Administration page (Only for deployed App) | http://<your_ip>:8282/admin/ |
 
 Log in to the Admin panel with the credentials from your `.env`.
@@ -123,8 +123,8 @@ docker compose logs frontend > frontend-logs.txt
 
 Deployments to the cloud VM are fully automated through a GitHub Actions workflow defined in
 [`.github/workflows/deployment.yaml`](.github/workflows/deployment.yaml). It builds the frontend and
-backend images and rolls them out to the VM over SSH — no manual `docker compose up` on the server is
-needed for a normal release.
+backend images, syncs the deployment configuration, and rolls everything out to the VM over SSH — no
+manual file editing or `docker compose up` on the server is needed for a normal release.
 
 ### How it works
 
@@ -142,39 +142,77 @@ The workflow consists of two jobs that run one after another:
 
 **2. `deploy-to-cloud-vm`** — runs after `build-and-push` succeeds
 
-- Opens an SSH connection to the cloud VM using a dedicated deploy key.
-- Logs in to `ghcr.io` on the VM (using the workflow's short-lived `GITHUB_TOKEN`).
-- Sets `IMAGE_TAG` to the current commit SHA, so `docker-compose.yml` on the VM resolves to the exact
-  images that were just built — not an arbitrary `latest`.
-- Runs `docker compose pull` to fetch the new images, then `docker compose up -d --remove-orphans` to
-  (re)start the whole stack (frontend, backend, database) in detached mode.
-- Runs `docker image prune -f` to clean up old, unused images afterwards.
+- Checks out the repository (needed so `docker-compose.yml` is available to copy to the VM).
+- Loads the SSH deploy key into an `ssh-agent` and adds the VM's host key to `known_hosts`.
+- Ensures the deployment directory exists on the VM (`mkdir -p`) — safe on a brand-new VM as well as
+  on every later run.
+- **Generates `.env` from GitHub Secrets**, entirely on the runner, and writes it to a local,
+  `chmod 600` file. It is never printed to the logs.
+- **Copies `docker-compose.yml` and the generated `.env`** to the VM via `scp`, overwriting whatever
+  was there before.
+- Opens an SSH connection to the VM, logs in to `ghcr.io` (using the workflow's short-lived
+  `GITHUB_TOKEN`), sets `IMAGE_TAG` to the current commit SHA (so `docker-compose.yml` resolves to the
+  exact images that were just built, not an arbitrary `latest`), then runs:
+  - `docker compose pull` — fetch the new images, no local build
+  - `docker compose up -d --remove-orphans` — (re)start the whole stack in detached mode
+  - `docker image prune -f` — clean up old, unused images
+- Deletes the locally generated `.env` file from the runner's workspace again (runs even if a previous
+  step failed, so no secret material lingers).
 
 If any step in either job fails (bad SSH connection, failing build, failed pull, etc.), the workflow
 stops and is marked as failed — it will never silently leave a broken deployment on the VM.
 
+> **Important:** Both `docker-compose.yml` and `.env` on the VM are now fully managed by this pipeline
+> and get **overwritten on every deployment**. Do not edit either file directly on the VM anymore —
+> changes there will be lost on the next push. Make configuration changes in this repository
+> (`docker-compose.yml`) or in GitHub Secrets (`.env` values) instead.
+
 ### Required GitHub secrets
 
 Configure these under **Settings → Secrets and variables → Actions** in this repository. None of them
-are committed to the repo:
+are committed to the repo.
 
-| Secret               | Purpose                                                              |
-|-----------------------|-----------------------------------------------------------------------|
-| `CLOUD_VM_HOST`       | IP address or hostname of the cloud VM                                |
-| `CLOUD_VM_USER`       | SSH username used to log in to the VM                                 |
-| `CLOUD_VM_PORT`       | SSH port of the VM (usually `22`)                                     |
-| `SSH_PRIVATE_KEY`     | Private key (matching a public key in the VM's `~/.ssh/authorized_keys`) |
+**VM connection:**
+
+| Secret            | Purpose                                                                  |
+|-------------------|---------------------------------------------------------------------------|
+| `CLOUD_VM_HOST`   | IP address or hostname of the cloud VM                                    |
+| `CLOUD_VM_USER`   | SSH username used to log in to the VM                                     |
+| `CLOUD_VM_PORT`   | SSH port of the VM (usually `22`)                                          |
+| `SSH_PRIVATE_KEY` | Private key (matching a public key in the VM's `~/.ssh/authorized_keys`)   |
+
+**Application configuration** (used to generate `.env` on the VM — see [Configure environment
+variables](#2-configure-environment-variables) for what each value means):
+
+| Secret                      |
+|------------------------------|
+| `DEBUG`                       |
+| `ALLOWED_HOSTS`                |
+| `DJANGO_SETTINGS_MODULE`       |
+| `DJANGO_SUPERUSER_USERNAME`    |
+| `DJANGO_SUPERUSER_EMAIL`       |
+| `DJANGO_SUPERUSER_PASSWORD`    |
+| `DB_NAME`                      |
+| `DB_USER`                      |
+| `DB_PASSWORD`                  |
+| `CC_SECRET_KEY`                |
+
+`DB_HOST` and `DB_PORT` are **not** secrets — they're fixed to `db` and `5432` by the workflow, since
+that's simply the internal Docker network name/port of the `db` service and never changes per
+environment.
 
 `GITHUB_TOKEN` is provided automatically by GitHub Actions for every run and does **not** need to be
-created manually — it is used to authenticate against `ghcr.io` for both pushing (from the runner) and
-pulling (from the VM) the images.
+created manually — it authenticates against `ghcr.io` for both pushing (from the runner) and pulling
+(from the VM) the images.
 
 ### Triggering a deployment
 
 The workflow runs automatically:
 
-- On every push to the `feature/conduit-deployment` branch (adjust the `on.push.branches` entry in the
-  workflow if your default branch differs).
+- On every push to the `main` branch.
+- Manual deployment from the feature branch: 
+  Go to the Actions tab → "Deployment" → "Run workflow" → in the dropdown "Use workflow from that branch" 
+  select the branch → click Run workflow.
 
 It can also be started manually at any time:
 
@@ -182,22 +220,21 @@ It can also be started manually at any time:
 2. Select the **Deployment** workflow in the left sidebar.
 3. Click **Run workflow**.
 
-This is useful when you want to re-deploy without pushing a new commit — for example, to retry after
-fixing a VM-side configuration issue.
+This is useful when you want to re-deploy without pushing a new commit — for example, after updating a
+secret value, or to retry following a transient failure. Always re-run the **whole workflow**, not just
+`deploy-to-cloud-vm` on its own — otherwise the deploy job may end up looking for images that were never
+built for that specific commit.
 
 ### One-time setup on the VM
 
-Before the very first deployment, the VM needs:
+Before the very first deployment, the VM only needs:
 
-1. A copy of `docker-compose.yml` and a filled-in `.env` file (see [Configure environment
-   variables](#2-configure-environment-variables)) at the path referenced in the workflow's `cd` step
-   (currently `~/project/conduit-deployment/conduit-container`).
-2. The public key matching `SSH_PRIVATE_KEY` added to `~/.ssh/authorized_keys` for the deploy user.
-3. Docker and the Docker Compose plugin installed, with the deploy user allowed to run `docker` commands
+1. The public key matching `SSH_PRIVATE_KEY` added to `~/.ssh/authorized_keys` for the deploy user.
+2. Docker and the Docker Compose plugin installed, with the deploy user allowed to run `docker` commands
    (e.g. member of the `docker` group).
 
-After that, every subsequent deployment is fully handled by the workflow — the `.env` file on the VM is
-never touched or overwritten by the pipeline, so database and admin credentials stay under your control.
+Everything else — the deployment directory, `docker-compose.yml`, and `.env` — is created and kept
+up to date automatically by the workflow from this point on.
 
 ### Troubleshooting
 
@@ -205,10 +242,13 @@ never touched or overwritten by the pipeline, so database and admin credentials 
   or the public key is missing from `~/.ssh/authorized_keys` on the VM.
 - **`... not found` when pulling an image** — the `build-and-push` job for that commit either failed or
   hasn't finished yet; re-run the *whole* workflow (not just `deploy-to-cloud-vm`) so both jobs run
-  against the same commit.
+  against the same commit. Also double-check that the image tags in `docker-compose.yml` use the
+  `<repo>:<service>-<tag>` format (service as a tag prefix), matching what `build-and-push` actually
+  pushes — not a nested `<repo>/<service>:<tag>` path.
 - **`dependency failed to start: container conduit-db is unhealthy`** — check `docker compose logs db`
-  on the VM; this is almost always a mismatch between the database credentials in `.env` and what the
-  Postgres data volume was originally initialized with.
+  on the VM; this is almost always a mismatch between the database credentials the `db` service receives
+  and what the Postgres data volume was originally initialized with (e.g. after changing a `DB_*` secret
+  without resetting the volume).
 
 ## Project Structure
 
