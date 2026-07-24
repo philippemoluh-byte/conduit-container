@@ -3,7 +3,7 @@ name: Deployment
 on:
   push:
     branches:
-      - feature/conduit-deployment
+      [main, feature/*]
   workflow_dispatch: {}
 
 env:
@@ -94,6 +94,60 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -p "${{ secrets.CLOUD_VM_PORT }}" "${{ secrets.CLOUD_VM_HOST }}" >> ~/.ssh/known_hosts
+            # Generates the .env file from GitHub Secrets, entirely on the
+
+      # runner's filesystem. It is never printed to the logs (GitHub
+      # Actions automatically masks any secret value that appears in
+      # log output, but we also never `cat` the file, so it stays out
+      # of the log entirely). The file is deleted again at the very end
+      # of this job, regardless of success or failure.
+      - name: Generate .env from GitHub Secrets
+        env:
+          DEBUG: ${{ secrets.DEBUG }}
+          ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+          DJANGO_SETTINGS_MODULE: ${{ secrets.DJANGO_SETTINGS_MODULE }}
+          DJANGO_SUPERUSER_USERNAME: ${{ secrets.DJANGO_SUPERUSER_USERNAME }}
+          DJANGO_SUPERUSER_EMAIL: ${{ secrets.DJANGO_SUPERUSER_EMAIL }}
+          DJANGO_SUPERUSER_PASSWORD: ${{ secrets.DJANGO_SUPERUSER_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          CC_SECRET_KEY: ${{ secrets.CC_SECRET_KEY }}
+          IMAGE_NAMESPACE: ${{secrets.IMAGE_NAMESPACE}}
+          IMAGE_TAG: ${{secrets.IMAGE_TAG}}
+        run: |
+          set -euo pipefail
+          cat > .env.deploy << EOF
+          DEBUG=${DEBUG}
+          ALLOWED_HOSTS=${ALLOWED_HOSTS}
+          DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}
+          DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME}
+          DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL}
+          DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
+          DB_NAME=${DB_NAME}
+          DB_USER=${DB_USER}
+          DB_PASSWORD=${DB_PASSWORD}
+          DB_HOST=db
+          DB_PORT=5432
+          CC_SECRET_KEY=${CC_SECRET_KEY}
+          IMAGE_NAMESPACE: ${IMAGE_NAMESPACE}
+          IMAGE_TAG: ${IMAGE_TAG}
+          EOF
+          chmod 600 .env.deploy
+
+      # Copies docker-compose.yml and the freshly generated .env.deploy to
+      # the VM, using the same ssh-agent/key loaded above - no extra login.
+      - name: Copy docker-compose.yml and .env to the VM
+        env:
+          VM_HOST: ${{ secrets.CLOUD_VM_HOST }}
+          VM_USER: ${{ secrets.CLOUD_VM_USER }}
+          VM_PORT: ${{ secrets.CLOUD_VM_PORT }}
+        run: |
+          set -euo pipefail
+          scp -P "${VM_PORT}" docker-compose.yml \
+            "${VM_USER}@${VM_HOST}:~/project/conduit-deployment/conduit-container/docker-compose.yml"
+          scp -P "${VM_PORT}" .env.deploy \
+            "${VM_USER}@${VM_HOST}:~/project/conduit-deployment/conduit-container/.env"
 
       - name: Open SSH connection to the VM and run the deployment
         env:
@@ -121,3 +175,10 @@ jobs:
             docker compose up -d --remove-orphans
             docker image prune -f
           EOF
+
+      # Removes the locally generated .env.deploy from the runner's
+      # workspace again. Runs even if a previous step failed, so no
+      # secret material lingers in the job's file system.
+      - name: Clean up local .env file
+        if: always()
+        run: rm -f .env.deploy
