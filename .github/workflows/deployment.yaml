@@ -3,8 +3,8 @@ name: Deployment
 on:
   push:
     branches:
-      - main
-  workflow_dispatch: {}
+      [main, feature/*]
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
