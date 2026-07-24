@@ -25,7 +25,7 @@ services:
 #    build:
 #      context: ./conduit-backend  # Path to the backend directory
 #      dockerfile: Dockerfile      # Dockerfile for the backend
-    image: ${REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE}/backend:${IMAGE_TAG:-latest}
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE}:backend-${IMAGE_TAG:-latest}
     container_name: conduit-backend  # Name of the backend container
     restart: always                    # Restart the container if it stops
     ports:
@@ -52,7 +52,7 @@ services:
 #    build:
 #      context: ./conduit-frontend  # Path to the frontend directory
 #      dockerfile: Dockerfile       # Dockerfile for the frontend
-    image: ${REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE}/frontend:${IMAGE_TAG:-latest}
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE}:frontend-${IMAGE_TAG:-latest}
     container_name: conduit-frontend  # Name of the frontend container
     restart: always                    # Restart the container if it stops
     ports:
