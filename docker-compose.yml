@@ -22,25 +22,22 @@ services:
 
   # Backend service configuration
   backend:
-    build:
-      context: ./conduit-backend  # Path to the backend directory
-      dockerfile: Dockerfile      # Dockerfile for the backend
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE}:backend-${IMAGE_TAG:-latest}
+    container_name: conduit-backend  # Name of the backend container
+    restart: always                    # Restart the container if it stops
     ports:
-      - "8000:8000"                    # Expose port 8000 for the backend
+      - "8001:8001"                    # Expose port 8000 for the backend
     volumes:
       - backend-static:/app/staticfiles  # Volume for static files
+    env_file:
+        - .env  # Load environment variables from .env file
     environment:
-      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-conduit.settings}  # Django settings module
-      - DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME:-admin}       # Default superuser username
-      - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL:-admin@example.com} # Default superuser email
-      - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD:-change-this-password} # Default superuser password
-      - ALLOWED_HOSTS=*            # Allow all hosts
-      - DEBUG=${DEBUG:-True}       # Debug mod
-      - DB_NAME=${DB_NAME:-conduit}
-      - DB_USER=${DB_USER:-conduit}
-      - DB_PASSWORD=${DB_PASSWORD:-conduit}
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-conduit.settings}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
+      - DEBUG=${DEBUG:-False}
       - DB_HOST=db
       - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-conduit}
     depends_on:
        db:
          condition: service_healthy  # Wait for the database to be healthy before starting
@@ -49,11 +46,23 @@ services:
 
   # Frontend service configuration
   frontend:
-    build:
-      context: ./conduit-frontend  # Path to the frontend directory
-      dockerfile: Dockerfile       # Dockerfile for the frontend
+#    build:
+#      context: ./conduit-frontend  # Path to the frontend directory
+#      dockerfile: Dockerfile       # Dockerfile for the frontend
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE}:frontend-${IMAGE_TAG:-latest}
+    container_name: conduit-frontend  # Name of the frontend container
+    restart: always                    # Restart the container if it stops
     ports:
       - "8282:80"                # Map port 8282 for the frontend
+
+    # Persistenz: falls der Nginx-Container selbst Zugriffslogs o.ä.
+    # persistieren soll, kann hier ein Volume ergänzt werden.
+    volumes:
+      - frontend-logs:/var/log/nginx
+
+    # Unkritische Konfiguration, keine Auth-Werte notwendig
+    environment:
+      - API_BASE_URL=${API_BASE_URL:-http://backend:8001}
     depends_on:
       - backend                    # Ensure backend starts before frontend
     networks:
@@ -63,6 +72,7 @@ services:
 volumes:
   backend-static:                  # Volume for backend static
   postgres-data:
+  frontend-logs:                  # Volume for frontend logs
 
 # Define a custom network for inter-service communication
 networks:

@@ -24,7 +24,7 @@ else:
 # Start Gunicorn with uwsgi protocol
 # therefore: conduit.wsgi:application is the path zum WSGI-App-Object
 exec gunicorn \
-    --bind 0.0.0.0:8000 \
+    --bind 0.0.0.0:8001 \
     --workers 4 \
     --worker-class sync \
     --max-requests 1000 \
